@@ -13,12 +13,10 @@
 # limitations under the License.
 
 # Kernel Image name
-ifeq ($(call is-kernel-greater-than-or-equal-to,5.4),true)
-  TARGET_KERNEL_IMAGE_NAME ?= Image
-else ifeq ($(TARGET_KERNEL_VERSION),4.19)
-  TARGET_KERNEL_IMAGE_NAME ?= Image.gz
-else ifeq ($(TARGET_KERNEL_VERSION),4.14)
-  TARGET_KERNEL_IMAGE_NAME ?= Image.gz-dtb
+ifneq (,$(filter 5.4 5.10 5.15, $(TARGET_KERNEL_VERSION)))
+  TARGET_KERNEL_IMAGE_NAME := Image
+else
+  TARGET_KERNEL_IMAGE_NAME := Image.gz
 endif
 
 # Handle copying the kernel
@@ -39,12 +37,6 @@ ifeq ($(call has-partition,dtbo),true)
   BOARD_PREBUILT_DTBOIMAGE ?= device/motorola/$(PRODUCT_DEVICE)-kernel/dtbo.img
 endif
 
-# Modules
-## Amogus can't handle stripped vendor modules for now
-ifneq ($(call is-kernel-greater-than-or-equal-to,4.19),true)
-  BOARD_DO_NOT_STRIP_VENDOR_MODULES := true
-endif
-
 ## Vendor Modules
 BOARD_VENDOR_KERNEL_MODULES ?= \
     $(wildcard device/motorola/$(PRODUCT_DEVICE)-kernel/modules/*.ko)
@@ -59,10 +51,5 @@ endif
 TARGET_FORCE_PREBUILT_KERNEL := true
 # Declare kernel config and source for headers
 TARGET_KERNEL_CONFIG := vendor/$(DEVICE)_defconfig
-ifeq ($(PRODUCT_USES_QCOM_HARDWARE),true)
-  TARGET_KERNEL_SOURCE := kernel/motorola/msm-$(TARGET_KERNEL_VERSION)
-else ifeq ($(PRODUCT_USES_MTK_HARDWARE),true)
-  TARGET_KERNEL_SOURCE := kernel/motorola/$(TARGET_BOARD_PLATFORM)
-else
-  $(error Target's hardware is not supported...)
-endif
+TARGET_KERNEL_SOURCE := kernel/motorola/$(TARGET_BOARD_PLATFORM)
+
